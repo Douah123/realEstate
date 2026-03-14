@@ -1,3 +1,4 @@
+import __main__
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -119,6 +120,9 @@ def resolve_model_path(app):
 
 
 def load_pipeline(app):
+    # The training notebook pickled the FunctionTransformer with preprocess_ames
+    # attached to __main__, so we re-register it before joblib.load().
+    setattr(__main__, "preprocess_ames", preprocess_ames)
     model_path = resolve_model_path(app)
     app.config["RESOLVED_MODEL_PATH"] = str(model_path)
     return joblib.load(model_path)
