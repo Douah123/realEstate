@@ -1,55 +1,276 @@
-# Deploiement AWS
+# Deployment Guide – Real Estate Price Prediction (AWS)
 
-## Backend
+Ce document décrit les étapes nécessaires pour déployer l’application de prédiction immobilière sur AWS.
 
-Le backend expose une API Flask dans `app.py` et un point d'entree WSGI dans `wsgi.py`.
+L’architecture utilisée est :
 
-Variables d'environnement minimales :
+Frontend (HTML/CSS) → S3  
+API Flask → EC2  
+Base de données MySQL → RDS  
+Monitoring → CloudWatch  
 
-```env
-ENABLE_DB_RECORDING=true
-DATABASE_URL=mysql+pymysql://username:password@your-rds-endpoint:3306/predict
-MODEL_S3_URI=s3://your-bucket/models/model_pipeline_complet4.pkl
-FRONTEND_ORIGINS=https://your-frontend.s3-website-region.amazonaws.com,https://www.your-domain.com
-```
+---
 
-Si le modele est present localement sur l'instance, utilise `MODEL_PATH` au lieu de `MODEL_S3_URI`.
+# 1. Création du VPC
 
-## RDS
+Un VPC dédié a été créé pour isoler l’infrastructure réseau.
 
-La table `predictions` est definie dans `models.py`.
+Configuration :
 
-Initialisation manuelle :
+CIDR : 10.0.0.0/16
 
-```bash
-flask --app app init-db
-```
+Sous-réseaux :
 
-N'active `AUTO_CREATE_DB=true` que pour un bootstrap simple.
+Public Subnet  
+10.0.1.0/24  
+Utilisé pour l’instance EC2
 
-## Frontend S3
+Private Subnet  
+10.0.2.0/24  
+Utilisé pour la base de données RDS
 
-Le fichier HTML peut etre servi statiquement depuis S3/CloudFront.
+Private Subnet  
+10.0.3.0/24  
+Utilisé pour la base de données RDS
 
-Comportement de resolution de l'API :
+Composants réseau :
 
-1. `window.APP_CONFIG.apiBaseUrl` si defini
-2. `localStorage.api_base_url` si defini
-3. `http://127.0.0.1:5000` en local
-4. `https://api.example.com` en fallback production
+Internet Gateway attaché au VPC  
+Route Table publique permettant l’accès Internet pour EC2
 
-Pour la prod, cree un fichier `app-config.js` a cote du HTML :
+Objectif :  
+Séparer les ressources publiques et privées pour des raisons de sécurité.
 
-```js
-window.APP_CONFIG = {
-  apiBaseUrl: "https://api.your-domain.com"
-};
-```
+---
 
-## Gunicorn
+# 2. Configuration des Security Groups
 
-Commande de demarrage :
+Deux Security Groups ont été créés.
 
-```bash
-gunicorn wsgi:app --bind 0.0.0.0:8000 --workers 2 --timeout 120
-```
+EC2-SG
+
+Autorise :
+
+Port 22 (SSH) uniquement depuis l’IP personnelle  
+Port 80 (HTTP) public  
+Port 443 (HTTPS) public  
+Port 8000 pour l’API Flask
+
+Objectif :  
+Permettre l’accès à l’API et l’administration SSH.
+
+---
+
+RDS-SG
+
+Autorise :
+
+Port 3306 (MySQL) uniquement depuis EC2-SG
+
+Objectif :  
+Empêcher tout accès direct à la base de données depuis Internet.
+
+---
+
+# 3. Entraînement du modèle Machine Learning
+
+Dataset utilisé :
+
+Ames Housing Dataset (Kaggle)
+
+Étapes réalisées :
+
+Nettoyage des données  
+Feature Engineering  
+Création de nouvelles variables  
+Entraînement du modèle de régression
+
+Modèle utilisé :
+
+RandomForestRegressor (Scikit-learn)
+
+Évaluation :
+
+RMSE   
+R²
+
+Objectif :  
+Prédire le prix d’un bien immobilier à partir de caractéristiques principales.
+
+---
+
+# 4. Sérialisation du modèle et stockage S3
+
+Le modèle entraîné a été sauvegardé avec Joblib.
+
+Fichier :
+
+model_pipeline_complet4.pkl
+
+Le fichier est uploadé dans un bucket S3.
+
+Objectif :
+
+Permettre à l’instance EC2 de récupérer le modèle automatiquement.
+
+Accès sécurisé via IAM Role (aucune clé AWS stockée dans le code).
+
+---
+
+# 5. Déploiement de l’API Flask sur EC2
+
+Instance EC2 :
+
+Type : t2.micro  
+OS : Ubuntu  
+
+Étapes :
+
+Clonage du repository GitHub
+
+Installation des dépendances
+
+pip install -r requirements.txt
+
+Configuration des variables d’environnement (.env)
+
+Lancement de l’API
+
+gunicorn -w 2 -b 0.0.0.0:8000 app:app
+
+Endpoint principal :
+
+POST /predict
+
+Exemple de requête JSON :
+
+{
+  "qualite_generale": 6,
+  "surface_habitable": 1500,
+  "surface_totale_sous_sol": 800,
+  "surface_garage": 300,
+  "surface_terrain": 5000,
+  "annee_construction": 2005,
+  "total_salles_bain": 2,
+  "climatisation_centrale": "y"
+}
+
+Objectif :
+
+Exposer un service API permettant d’effectuer des prédictions.
+
+---
+
+# 6. Base de données RDS MySQL
+
+Service utilisé :
+
+Amazon RDS – MySQL
+
+Instance :
+
+db.t3.micro
+
+Base créée :
+
+predict
+
+Table :
+
+predictions
+
+Colonnes :
+
+id  
+qualite_generale  
+surface_habitable  
+surface_totale_sous_sol  
+surface_garage  
+surface_terrain  
+annee_construction  
+total_salles_bain  
+climatisation_centrale  
+prediction  
+created_at  
+
+Objectif :
+
+Enregistrer chaque prédiction réalisée par l’API.
+
+---
+
+# 7. Frontend statique sur S3
+
+Une interface HTML/CSS simple permet de saisir les caractéristiques du bien.
+
+Fonctionnement :
+
+Formulaire utilisateur  
+Envoi d’une requête POST vers l’API EC2  
+Affichage du prix prédit
+
+Le site est hébergé via :
+
+S3 Static Website Hosting.
+
+Objectif :
+
+Fournir une interface utilisateur simple pour interagir avec l’API.
+
+---
+
+# 8. Monitoring avec CloudWatch
+
+CloudWatch est utilisé pour surveiller l’instance EC2.
+
+Alarme créée :
+
+CPUUtilization > 80%
+
+Configuration :
+
+Metric : CPUUtilization  
+Period : 5 minutes  
+Statistic : Average  
+
+Objectif :
+
+Être alerté en cas de forte utilisation CPU.
+
+---
+
+# Architecture finale
+
+Frontend (S3 Static Website)
+
+↓
+
+API Flask (EC2)
+
+↓
+
+Modèle ML chargé depuis S3
+
+↓
+
+Base de données MySQL (RDS)
+
+↓
+
+Monitoring CloudWatch
+
+---
+
+# Conclusion
+
+Cette architecture démontre l’intégration complète d’un modèle de Machine Learning dans une infrastructure Cloud AWS.
+
+Services AWS utilisés :
+
+VPC  
+EC2  
+S3  
+RDS  
+CloudWatch  
+
+L’application permet de prédire le prix d’un bien immobilier via une API REST et de stocker les résultats dans une base de données.

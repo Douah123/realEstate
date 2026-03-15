@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-  apiBaseUrl: "https://api.your-domain.com"
+  apiBaseUrl: "http://44.222.243.150:8000"
 };

@@ -334,7 +334,7 @@
                 return "http://127.0.0.1:5000";
             }
 
-            return "https://api.example.com";
+            return window.location.origin;
         }
 
         const API_BASE_URL = resolveApiBaseUrl();
@@ -346,6 +346,25 @@
         const statusText = document.getElementById("status-text");
         const resultBox = document.getElementById("result-box");
         const resultText = document.getElementById("result-text");
+
+        async function readApiResponse(response) {
+            const contentType = response.headers.get("content-type") || "";
+            const rawText = await response.text();
+
+            if (!contentType.includes("application/json")) {
+                throw new Error(
+                    `L'API ${API_URL} n'a pas renvoye du JSON. Verifie app-config.js ou l'URL d'API.`
+                );
+            }
+
+            try {
+                return JSON.parse(rawText);
+            } catch (error) {
+                throw new Error(
+                    `Reponse JSON invalide depuis ${API_URL}.`
+                );
+            }
+        }
 
         function randomInt(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -396,8 +415,6 @@
             statusText.textContent = "Formulaire reinitialise.";
         });
 
-        statusText.textContent = `API active: ${API_BASE_URL}`;
-
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
             submitButton.disabled = true;
@@ -416,7 +433,7 @@
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
+                const data = await readApiResponse(response);
 
                 if (!response.ok || !data.ok) {
                     throw new Error(data.error || "Erreur lors de l'estimation.");
