@@ -222,6 +222,13 @@
             font-weight: 600;
         }
 
+        .result .result-meta {
+            margin-top: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--muted);
+        }
+
         .card-footer {
             margin-top: 18px;
             display: flex;
@@ -304,6 +311,7 @@
             <div class="result" id="result-box" hidden>
                 <strong>Resultat</strong>
                 <p id="result-text"></p>
+                <p class="result-meta" id="result-interval" hidden></p>
             </div>
 
             <div class="card-footer">
@@ -346,6 +354,7 @@
         const statusText = document.getElementById("status-text");
         const resultBox = document.getElementById("result-box");
         const resultText = document.getElementById("result-text");
+        const resultInterval = document.getElementById("result-interval");
 
         async function readApiResponse(response) {
             const contentType = response.headers.get("content-type") || "";
@@ -406,12 +415,16 @@
                 }
             });
             resultBox.hidden = true;
+            resultInterval.hidden = true;
+            resultInterval.textContent = "";
             statusText.textContent = "Exemple aleatoire charge.";
         });
 
         resetButton.addEventListener("click", () => {
             form.reset();
             resultBox.hidden = true;
+            resultInterval.hidden = true;
+            resultInterval.textContent = "";
             statusText.textContent = "Formulaire reinitialise.";
         });
 
@@ -421,6 +434,8 @@
             submitButton.textContent = "Calcul...";
             statusText.textContent = "Estimation en cours.";
             resultBox.hidden = true;
+            resultInterval.hidden = true;
+            resultInterval.textContent = "";
 
             const payload = Object.fromEntries(new FormData(form).entries());
 
@@ -440,10 +455,17 @@
                 }
 
                 resultText.textContent = data.prediction_text;
+                if (data.confidence_interval_text) {
+                    resultInterval.textContent = data.confidence_interval_text;
+                    resultInterval.hidden = false;
+                } else {
+                    resultInterval.hidden = true;
+                }
                 resultBox.hidden = false;
                 statusText.textContent = "Estimation terminee.";
             } catch (error) {
                 resultText.textContent = error.message;
+                resultInterval.hidden = true;
                 resultBox.hidden = false;
                 statusText.textContent = "Impossible de calculer l'estimation.";
             } finally {

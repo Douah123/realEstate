@@ -186,7 +186,13 @@ curl -X POST http://127.0.0.1:5000/predict \
 {
   "ok": true,
   "prediction": 211236.41046638,
+  "confidence_interval": {
+    "level": 0.95,
+    "lower_bound": 176420.0,
+    "upper_bound": 243180.0
+  },
   "prediction_text": "Prix predit : 211,236 $",
+  "confidence_interval_text": "Intervalle de confiance 95% : [176,420 $, 243,180 $]",
   "prediction_id": null
 }
 ```

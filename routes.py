@@ -2,7 +2,7 @@ from flask import jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import Prediction, db
-from prediction_service import REQUIRED_FIELDS, build_model_input
+from prediction_service import REQUIRED_FIELDS, build_model_input, predict_with_interval
 
 
 def register_routes(app):
@@ -44,7 +44,9 @@ def register_routes(app):
         except (TypeError, ValueError) as exc:
             return jsonify({"ok": False, "error": f"Donnees invalides: {exc}"}), 400
 
-        prediction = float(app.config["PIPELINE"].predict(model_input)[0])
+        prediction_result = predict_with_interval(app.config["PIPELINE"], model_input)
+        prediction = prediction_result["prediction"]
+        confidence_interval = prediction_result["confidence_interval"]
         prediction_id = None
 
         if app.config["ENABLE_DB_RECORDING"]:
@@ -72,7 +74,13 @@ def register_routes(app):
             {
                 "ok": True,
                 "prediction": prediction,
+                "confidence_interval": confidence_interval,
                 "prediction_text": f"Prix predit : {prediction:,.0f} $",
+                "confidence_interval_text": (
+                    f"Intervalle de confiance {confidence_interval['level']:.0%} : "
+                    f"[{confidence_interval['lower_bound']:,.0f} $, "
+                    f"{confidence_interval['upper_bound']:,.0f} $]"
+                ),
                 "prediction_id": prediction_id,
             }
         )
