@@ -47,5 +47,5 @@ def load_settings():
         "AUTO_CREATE_DB": parse_bool(os.getenv("AUTO_CREATE_DB"), default=False),
         "FRONTEND_ORIGINS": frontend_origins,
         "FLASK_HOST": os.getenv("FLASK_HOST", "0.0.0.0"),
-        "PORT": int(os.getenv("PORT", "5000")),
+        "PORT": 8000,
     }

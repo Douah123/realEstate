@@ -117,7 +117,7 @@ Exemple simple pour du local sans enregistrement en base :
 FLASK_ENV=development
 FLASK_DEBUG=true
 FLASK_HOST=0.0.0.0
-PORT=5000
+PORT=8000
 ENABLE_DB_RECORDING=false
 AUTO_CREATE_DB=false
 MODEL_PATH=model_pipeline_complet4.pkl
@@ -133,7 +133,7 @@ python app.py
 L'API sera disponible sur :
 
 ```text
-http://127.0.0.1:5000
+http://127.0.0.1:8000
 ```
 
 ## Utilisation de l'API
@@ -166,7 +166,7 @@ application/json
 ### Exemple avec curl
 
 ```bash
-curl -X POST http://127.0.0.1:5000/predict \
+curl -X POST http://127.0.0.1:8000/predict \
   -H "Content-Type: application/json" \
   -d '{
     "qualite_generale": 6,
@@ -207,14 +207,14 @@ Resolution de l'URL de l'API dans `templates/index.html` :
 
 1. `window.APP_CONFIG.apiBaseUrl` si defini ;
 2. `localStorage.api_base_url` si defini ;
-3. `http://127.0.0.1:5000` en local ;
+3. `http://127.0.0.1:8000` en local ;
 4. `window.location.origin` en dernier recours.
 
 Exemple de fichier `templates/app-config.js` :
 
 ```js
 window.APP_CONFIG = {
-  apiBaseUrl: "http://127.0.0.1:5000"
+  apiBaseUrl: "http://127.0.0.1:8000"
 };
 ```
 
