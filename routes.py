@@ -48,6 +48,7 @@ def register_routes(app):
         prediction = prediction_result["prediction"]
         confidence_interval = prediction_result["confidence_interval"]
         prediction_id = None
+        db_recording_error = None
 
         if app.config["ENABLE_DB_RECORDING"]:
             prediction_record = Prediction(
@@ -66,9 +67,17 @@ def register_routes(app):
                 db.session.add(prediction_record)
                 db.session.commit()
                 prediction_id = prediction_record.id
-            except SQLAlchemyError as exc:
-                db.session.rollback()
-                return jsonify({"ok": False, "error": f"Erreur base de donnees: {exc.__class__.__name__}"}), 500
+            except Exception as exc:
+                try:
+                    db.session.rollback()
+                except Exception:
+                    app.logger.exception("Echec du rollback apres erreur base de donnees.")
+
+                app.logger.exception("Prediction calculee mais enregistrement base de donnees impossible.")
+                db_recording_error = (
+                    "Prediction calculee, mais enregistrement base de donnees impossible: "
+                    f"{exc.__class__.__name__}"
+                )
 
         return jsonify(
             {
@@ -82,5 +91,6 @@ def register_routes(app):
                     f"{confidence_interval['upper_bound']:,.0f} $]"
                 ),
                 "prediction_id": prediction_id,
+                "db_recording_error": db_recording_error,
             }
         )
