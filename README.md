@@ -268,6 +268,17 @@ Le modele final sauvegarde est ensuite exporte dans :
 model_pipeline_complet4.pkl
 ```
 
+### Metriques de performance
+
+Lors de l'evaluation dans le notebook, le modele obtient les resultats suivants sur le jeu de test :
+
+- `MAE` : `13,207.95`
+- `MSE` : `372,410,989.06`
+- `RMSE` : `19,297.95`
+- `R²` : `0.9301`
+
+Ces valeurs proviennent de `entrainement_modele.ipynb` et peuvent varier si le modele est reentraine ou si le split des donnees change.
+
 ### Pourquoi `preprocess_ames` doit rester dans le code
 
 Le notebook a serialize un pipeline qui reference explicitement `preprocess_ames`.
