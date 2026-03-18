@@ -3,7 +3,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import joblib
-import numpy as np
 import pandas as pd
 
 try:
@@ -130,34 +129,56 @@ def load_pipeline(app):
 
 
 def predict_with_interval(pipeline, model_input, confidence=0.95):
-    prediction = float(pipeline.predict(model_input)[0])
+    residual_quantiles = None
+    model_pipeline = pipeline
 
-    if not hasattr(pipeline, "named_steps"):
+    if isinstance(pipeline, dict):
+        model_pipeline = pipeline.get("pipeline")
+        residual_quantiles = pipeline.get("residual_quantiles")
+
+    if model_pipeline is None:
+        raise RuntimeError("Le modele charge est invalide.")
+
+    prediction = float(model_pipeline.predict(model_input)[0])
+
+    if residual_quantiles is not None:
+        lower_bound = prediction + float(residual_quantiles["q_low"])
+        upper_bound = prediction + float(residual_quantiles["q_high"])
+        interval_level = float(residual_quantiles.get("level", confidence))
+
+        return {
+            "prediction": prediction,
+            "confidence_interval": {
+                "level": interval_level,
+                "lower_bound": float(lower_bound),
+                "upper_bound": float(upper_bound),
+            },
+        }
+
+    if not hasattr(model_pipeline, "named_steps"):
         raise RuntimeError("Le pipeline charge ne permet pas de calculer un intervalle.")
 
     transformed_input = model_input
-    preprocessing = pipeline.named_steps.get("preprocessing")
+    preprocessing = model_pipeline.named_steps.get("preprocessing")
     if preprocessing is not None:
         transformed_input = preprocessing.transform(transformed_input)
 
-    scaler = pipeline.named_steps.get("scaler")
+    scaler = model_pipeline.named_steps.get("scaler")
     if scaler is not None:
         transformed_input = scaler.transform(transformed_input)
 
-    model = pipeline.named_steps.get("model")
+    model = model_pipeline.named_steps.get("model")
     if model is None or not hasattr(model, "estimators_"):
         raise RuntimeError("Le modele charge ne supporte pas le calcul d'intervalle.")
 
-    tree_predictions = np.array(
-        [estimator.predict(transformed_input)[0] for estimator in model.estimators_],
-        dtype=float,
-    )
+    tree_predictions = [float(estimator.predict(transformed_input)[0]) for estimator in model.estimators_]
+    tree_predictions.sort()
 
     alpha = 1 - confidence
-    lower_bound, upper_bound = np.percentile(
-        tree_predictions,
-        [100 * (alpha / 2), 100 * (1 - alpha / 2)],
-    )
+    lower_index = int((len(tree_predictions) - 1) * (alpha / 2))
+    upper_index = int((len(tree_predictions) - 1) * (1 - alpha / 2))
+    lower_bound = tree_predictions[lower_index]
+    upper_bound = tree_predictions[upper_index]
 
     return {
         "prediction": prediction,
