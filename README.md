@@ -21,6 +21,8 @@ L'application estime un prix immobilier a partir des donnees suivantes :
 - qualite generale ;
 - annee de construction ;
 - surface habitable ;
+- surface du 1er etage ;
+- surface du 2eme etage ;
 - surface totale du sous-sol ;
 - surface du garage ;
 - surface du terrain ;
@@ -154,6 +156,8 @@ application/json
 {
   "qualite_generale": 6,
   "surface_habitable": 1400,
+  "surface_1er_etage": 900,
+  "surface_2eme_etage": 500,
   "surface_totale_sous_sol": 900,
   "surface_garage": 350,
   "surface_terrain": 7000,
@@ -171,6 +175,8 @@ curl -X POST http://127.0.0.1:8000/predict \
   -d '{
     "qualite_generale": 6,
     "surface_habitable": 1400,
+    "surface_1er_etage": 900,
+    "surface_2eme_etage": 500,
     "surface_totale_sous_sol": 900,
     "surface_garage": 350,
     "surface_terrain": 7000,

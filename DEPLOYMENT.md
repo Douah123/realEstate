@@ -147,6 +147,8 @@ Exemple de requête JSON :
 {
   "qualite_generale": 6,
   "surface_habitable": 1500,
+  "surface_1er_etage": 1000,
+  "surface_2eme_etage": 500,
   "surface_totale_sous_sol": 800,
   "surface_garage": 300,
   "surface_terrain": 5000,

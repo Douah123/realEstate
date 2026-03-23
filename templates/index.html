@@ -272,6 +272,16 @@
                     </div>
 
                     <div class="field">
+                        <label for="surface_1er_etage">Surface 1er etage (m2)</label>
+                        <input id="surface_1er_etage" type="number" step="any" name="surface_1er_etage" min="0" placeholder="Ex: 900 m2" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="surface_2eme_etage">Surface 2eme etage (m2)</label>
+                        <input id="surface_2eme_etage" type="number" step="any" name="surface_2eme_etage" min="0" placeholder="Ex: 500 m2" required>
+                    </div>
+
+                    <div class="field">
                         <label for="surface_totale_sous_sol">Surface totale sous-sol (m2)</label>
                         <input id="surface_totale_sous_sol" type="number" step="any" name="surface_totale_sous_sol" min="0" placeholder="Ex: 900 m2" required>
                     </div>
@@ -386,7 +396,12 @@
 
         function buildDemoValues() {
             const qualite = randomInt(4, 8);
-            const surfaceHabitable = randomInt(900, 2600);
+            const surface1erEtage = randomInt(700, 1800);
+            const surface2emeEtage = Math.random() > 0.45 ? randomInt(0, 900) : 0;
+            const surfaceHabitable = randomInt(
+                Math.max(surface1erEtage, surface2emeEtage),
+                surface1erEtage + surface2emeEtage
+            );
             const surfaceSousSol = randomInt(0, Math.round(surfaceHabitable * 0.8));
             const surfaceGarage = randomInt(0, 550);
             const surfaceTerrain = randomInt(3500, 12000);
@@ -397,6 +412,8 @@
             return {
                 qualite_generale: qualite,
                 surface_habitable: surfaceHabitable,
+                surface_1er_etage: surface1erEtage,
+                surface_2eme_etage: surface2emeEtage,
                 surface_totale_sous_sol: surfaceSousSol,
                 surface_garage: surfaceGarage,
                 surface_terrain: surfaceTerrain,

@@ -14,6 +14,8 @@ except ImportError:  # pragma: no cover
 REQUIRED_FIELDS = [
     "qualite_generale",
     "surface_habitable",
+    "surface_1er_etage",
+    "surface_2eme_etage",
     "surface_totale_sous_sol",
     "surface_garage",
     "surface_terrain",
@@ -193,6 +195,8 @@ def predict_with_interval(pipeline, model_input, confidence=0.95):
 def build_model_input(payload):
     qualite_generale = int(payload["qualite_generale"])
     surface_habitable = float(payload["surface_habitable"])
+    surface_1er_etage = float(payload["surface_1er_etage"])
+    surface_2eme_etage = float(payload["surface_2eme_etage"])
     surface_totale_sous_sol = float(payload["surface_totale_sous_sol"])
     surface_garage = float(payload["surface_garage"])
     surface_terrain = float(payload["surface_terrain"])
@@ -200,8 +204,6 @@ def build_model_input(payload):
     total_salles_bain = float(payload["total_salles_bain"])
     climatisation_centrale = str(payload["climatisation_centrale"]).lower()
 
-    surface_1er_etage = surface_habitable
-    surface_2eme_etage = 0
     surface_finie_sous_sol_1 = 0.5 * surface_totale_sous_sol
     surface_sous_sol_non_finie = 0.5 * surface_totale_sous_sol
     qualite_sous_sol = max(3, min(qualite_generale, 7))
