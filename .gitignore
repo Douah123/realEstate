@@ -4,6 +4,4 @@ __pycache__/
 *.pyc
 *.pyo
 /venv
-model_pipeline_complet4.pkl
-model_pipeline_complet5.pkl
-model_pipeline_complet6.pkl
+model_pipeline_complet.pkl
