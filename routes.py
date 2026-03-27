@@ -86,7 +86,7 @@ def register_routes(app):
                 "confidence_interval": confidence_interval,
                 "prediction_text": f"Prix predit : {prediction:,.0f} $",
                 "confidence_interval_text": (
-                    f"Intervalle de confiance {confidence_interval['level']:.0%} : "
+                    f"Intervalle de prediction {confidence_interval['level']:.0%} : "
                     f"[{confidence_interval['lower_bound']:,.0f} $, "
                     f"{confidence_interval['upper_bound']:,.0f} $]"
                 ),
