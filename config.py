@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent
-LOCAL_MODEL_PATH = BASE_DIR / "model_pipeline_complet4.pkl"
+LOCAL_MODEL_PATH = BASE_DIR / "model_pipeline_complet.pkl"
 
 
 def parse_bool(value, default=False):
